@@ -19,3 +19,8 @@
 10) Change the target paths in gitignore
 11) Import the project as a maven project into your IDE
 12) Customize the application.properties and create the certificates accordingly
+
+PROVIDER:
+
+1) Create your own packages
+2) Add the basic package into the main class
