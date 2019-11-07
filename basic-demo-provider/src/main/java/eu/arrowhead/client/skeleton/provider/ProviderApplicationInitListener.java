@@ -7,7 +7,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -82,6 +84,9 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 		mySystem.setSystemName(mySystemName);
 		mySystem.setAddress(mySystemAddress);
 		mySystem.setPort(mySystemPort);
+		if (sslEnabled) {
+			mySystem.setAuthenticationInfo(Base64.getEncoder().encodeToString(arrowheadService.getMyPublicKey().getEncoded()));			
+		}
 		
 		ServiceRegistryRequestDTO serviceRegistryRequestDTO = new ServiceRegistryRequestDTO();
 		serviceRegistryRequestDTO.setProviderSystem(mySystem);
@@ -89,7 +94,7 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 		serviceRegistryRequestDTO.setServiceUri(ProviderController.GET_RANDOM_NUMBER_SERVICE_URI);
 		serviceRegistryRequestDTO.setInterfaces(List.of(ProviderController.GET_RANDOM_NUMBER_SERVICE_INTERFACE_INSECURE, ProviderController.GET_RANDOM_NUMBER_SERVICE_INTERFACE_SECURE));
 		serviceRegistryRequestDTO.setSecure(sslEnabled ? (tokenSecurityFilterEnabled? ServiceSecurityType.TOKEN : ServiceSecurityType.CERTIFICATE) : ServiceSecurityType.NOT_SECURE);
-		serviceRegistryRequestDTO.getMetadata().put("http-method", ProviderController.GET_RANDOM_NUMBER_SERVICE_HTTP_METHOD);
+		serviceRegistryRequestDTO.setMetadata(Map.of("http-method", ProviderController.GET_RANDOM_NUMBER_SERVICE_HTTP_METHOD));
 		arrowheadService.forceRegisterServiceToServiceRegistry(serviceRegistryRequestDTO);
 	}
 	
