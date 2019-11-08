@@ -1,8 +1,11 @@
 package com.porto.demo.consumer;
 
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -28,6 +31,11 @@ public class ConsumerMain implements ApplicationRunner {
 	// members
 	
 	public static final String GET_RANDOM_NUMBER_SERVICE_DEFINITION = "random-numbers";
+	public static final String GET_RANDOM_NUMBER_SERVICE_INTERFACE_INSECURE = "HTTP-INSECURE-TEXT";
+	public static final String GET_RANDOM_NUMBER_SERVICE_INTERFACE_SECURE = "HTTPS-SECURE-TEXT";
+	
+	@Value(CommonConstants.$SERVER_SSL_ENABLED_WD)
+	private boolean sslEnabled;
 	
     @Autowired
 	private ArrowheadService arrowheadService;
@@ -52,6 +60,7 @@ public class ConsumerMain implements ApplicationRunner {
 	    	
 	    	final ServiceQueryFormDTO requestedService = new ServiceQueryFormDTO();
 	    	requestedService.setServiceDefinitionRequirement(GET_RANDOM_NUMBER_SERVICE_DEFINITION);
+	    	requestedService.setInterfaceRequirements(sslEnabled ? List.of(GET_RANDOM_NUMBER_SERVICE_INTERFACE_SECURE) : List.of(GET_RANDOM_NUMBER_SERVICE_INTERFACE_INSECURE));
 	    	
 	    	orchestrationFormBuilder.requestedService(requestedService)
 	    							.flag(Flag.MATCHMAKING, true)
@@ -80,7 +89,7 @@ public class ConsumerMain implements ApplicationRunner {
 	    	final String address = result.getProvider().getAddress();
 	    	final int port = result.getProvider().getPort();
 	    	final String serviceUri = result.getServiceUri();
-	    	final String interfaceName = result.getInterfaces().get(0).getInterfaceName(); //Simplest way of choosing an interface.
+	    	final String interfaceName = sslEnabled ? GET_RANDOM_NUMBER_SERVICE_INTERFACE_SECURE : GET_RANDOM_NUMBER_SERVICE_INTERFACE_INSECURE;
 	    	String token = null;
 	    	if (result.getAuthorizationTokens() != null) {
 	    		token = result.getAuthorizationTokens().get(interfaceName); //Can be null when the security type of the provider is 'CERTIFICATE' or nothing.
@@ -88,7 +97,7 @@ public class ConsumerMain implements ApplicationRunner {
 	    	final Object payload = null; //Can be null if not specified in the description of the service.
 	    	
 	    	final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload);
-	    	System.out.println(consumedService);
+	    	System.out.println("Consumed service result: " + consumedService);
 	    	Thread.sleep(2000);
     	}
 	}
