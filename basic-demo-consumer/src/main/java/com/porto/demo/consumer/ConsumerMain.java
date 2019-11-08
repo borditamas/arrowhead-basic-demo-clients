@@ -27,6 +27,8 @@ public class ConsumerMain implements ApplicationRunner {
     //=================================================================================================
 	// members
 	
+	public static final String GET_RANDOM_NUMBER_SERVICE_DEFINITION = "random-numbers";
+	
     @Autowired
 	private ArrowheadService arrowheadService;
     
@@ -43,48 +45,51 @@ public class ConsumerMain implements ApplicationRunner {
     //-------------------------------------------------------------------------------------------------
     @Override
 	public void run(final ApplicationArguments args) throws Exception {
-		//SIMPLE EXAMPLE OF INITIATING AN ORCHESTRATION
-    	
-    	final Builder orchestrationFormBuilder = arrowheadService.getOrchestrationFormBuilder();
-    	
-    	final ServiceQueryFormDTO requestedService = new ServiceQueryFormDTO();
-    	requestedService.setServiceDefinitionRequirement("test-service");
-    	
-    	orchestrationFormBuilder.requestedService(requestedService)
-    							.flag(Flag.MATCHMAKING, false) //When this flag is false or not specified, then the orchestration response cloud contain more proper provider. Otherwise only one will be chosen if there is any proper.
-    							.flag(Flag.OVERRIDE_STORE, true) //When this flag is false or not specified, then a Store Orchestration will be proceeded. Otherwise a Dynamic Orchestration will be proceeded.
-    							.flag(Flag.TRIGGER_INTER_CLOUD, false); //When this flag is false or not specified, then orchestration will not look for providers in the neighbor clouds, when there is no proper provider in the local cloud. Otherwise it will. 
-    	
-    	final OrchestrationFormRequestDTO orchestrationRequest = orchestrationFormBuilder.build();
-    	
-    	OrchestrationResponseDTO response = null;
-    	try {
-    		response = arrowheadService.proceedOrchestration(orchestrationRequest);			
-		} catch (final ArrowheadException ex) {
-			//Handle the unsuccessful request as you wish!
-		}
-    	
-    	//EXAMPLE OF CONSUMING THE SERVICE FROM A CHOSEN PROVIDER
-    	
-    	if (response == null || response.getResponse().isEmpty()) {
-    		//If no proper providers found during the orchestration process, then the response list will be empty. Handle the case as you wish!
-    		logger.debug("Orchestration response is empty");
-    		return;
+    	while (true) {						
+			//INITIATING THE ORCHESTRATION
+	    	
+	    	final Builder orchestrationFormBuilder = arrowheadService.getOrchestrationFormBuilder();
+	    	
+	    	final ServiceQueryFormDTO requestedService = new ServiceQueryFormDTO();
+	    	requestedService.setServiceDefinitionRequirement(GET_RANDOM_NUMBER_SERVICE_DEFINITION);
+	    	
+	    	orchestrationFormBuilder.requestedService(requestedService)
+	    							.flag(Flag.MATCHMAKING, true)
+	    							.flag(Flag.OVERRIDE_STORE, true)
+	    							.flag(Flag.TRIGGER_INTER_CLOUD, false);
+	    	
+	    	final OrchestrationFormRequestDTO orchestrationRequest = orchestrationFormBuilder.build();
+	    	
+	    	OrchestrationResponseDTO response = null;
+	    	try {
+	    		response = arrowheadService.proceedOrchestration(orchestrationRequest);			
+			} catch (final ArrowheadException ex) {
+				logger.info(ex.getMessage());
+			}
+	    	
+	    	//CONSUMING THE SERVICE
+	    	
+	    	if (response == null || response.getResponse().isEmpty()) {
+	    		logger.info("Orchestration response is empty");
+	    		return;
+	    	}
+	    	
+	    	final OrchestrationResultDTO result = response.getResponse().get(0);
+	    	
+	    	final HttpMethod httpMethod = HttpMethod.valueOf(result.getMetadata().get("http-method"));
+	    	final String address = result.getProvider().getAddress();
+	    	final int port = result.getProvider().getPort();
+	    	final String serviceUri = result.getServiceUri();
+	    	final String interfaceName = result.getInterfaces().get(0).getInterfaceName(); //Simplest way of choosing an interface.
+	    	String token = null;
+	    	if (result.getAuthorizationTokens() != null) {
+	    		token = result.getAuthorizationTokens().get(interfaceName); //Can be null when the security type of the provider is 'CERTIFICATE' or nothing.
+			}
+	    	final Object payload = null; //Can be null if not specified in the description of the service.
+	    	
+	    	final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload);
+	    	System.out.println(consumedService);
+	    	Thread.sleep(2000);
     	}
-    	
-    	final OrchestrationResultDTO result = response.getResponse().get(0); //Simplest way of choosing a provider.
-    	
-    	final HttpMethod httpMethod = HttpMethod.GET;//Http method should be specified in the description of the service.
-    	final String address = result.getProvider().getAddress();
-    	final int port = result.getProvider().getPort();
-    	final String serviceUri = result.getServiceUri();
-    	final String interfaceName = result.getInterfaces().get(0).getInterfaceName(); //Simplest way of choosing an interface.
-    	String token = null;
-    	if (result.getAuthorizationTokens() != null) {
-    		token = result.getAuthorizationTokens().get(interfaceName); //Can be null when the security type of the provider is 'CERTIFICATE' or nothing.
-		}
-    	final Object payload = null; //Can be null if not specified in the description of the service.
-    	
-    	final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload, "testkey", "testvalue");
 	}
 }
