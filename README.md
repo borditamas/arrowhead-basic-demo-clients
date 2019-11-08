@@ -14,6 +14,7 @@
 	- Parent
 	- ArtifactID
 	- Name
+	
 7) Add the consumer and provider artifact ids to the parent pom as a module
 8) Rename the consumer and provider folders inline with the artifact ids
 9) Verify your settings with a mvn clean install command
