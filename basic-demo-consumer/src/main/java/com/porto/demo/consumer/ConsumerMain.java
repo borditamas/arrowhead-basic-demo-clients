@@ -1,4 +1,4 @@
-package eu.arrowhead.client.skeleton.consumer;
+package com.porto.demo.consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

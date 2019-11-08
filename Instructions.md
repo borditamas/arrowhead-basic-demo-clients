@@ -26,3 +26,8 @@ PROVIDER:
 2) Add the basic package into the main class
 4) Create you controller (your service)
 3) Customize the ApplicationInitListener (register/unregister the service)
+
+CONSUMER:
+
+1) Create your own packages
+2) Add the basic package into the main class
