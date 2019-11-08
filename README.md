@@ -2,6 +2,7 @@
 2) Copy the consumer, provider folder and the pom, gitignore file to your project folder
 3) Delete the maven modules from the pom file
 4) Customize the following field in the parent pom
+
 	- GroupID
 	- ArtifactID
 	- Version
@@ -11,6 +12,7 @@
 	- Licenses (or delete)
 	
 5-6) Customize the followings field in the consumer and provider pom
+
 	- Parent
 	- ArtifactID
 	- Name
