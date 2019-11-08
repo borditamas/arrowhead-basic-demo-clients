@@ -9,6 +9,7 @@
 	- Description
 	- Url (or delete)
 	- Licenses (or delete)
+	
 5-6) Customize the followings field in the consumer and provider pom
 	- Parent
 	- ArtifactID
